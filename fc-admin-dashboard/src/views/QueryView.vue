@@ -93,6 +93,7 @@ function formatValue(value: unknown): string {
     </h1>
     <p class="text-body-2 text-medium-emphasis mb-4">
       Run an example first. An empty table means the graph has no matching claims yet.
+      You can also <router-link to="/explore" class="text-primary">walk the graph visually</router-link>.
       <span v-if="info?.backend"> Backend: {{ info.backend }}{{ info.queryLanguage ? `, ${info.queryLanguage}` : "" }}.</span>
       <a
         v-if="info?.documentation"

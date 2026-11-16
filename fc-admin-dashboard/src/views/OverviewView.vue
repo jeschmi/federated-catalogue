@@ -202,7 +202,8 @@ function chipColor(value?: string | boolean): string {
       No assets or graph claims are stored yet. The figures below still describe this instance.
       Graph query has examples you can run before any credential is posted.
       <div class="mt-3">
-        <v-btn to="/query" size="small" variant="tonal" color="primary">Open graph query</v-btn>
+        <v-btn to="/explore" size="small" variant="tonal" color="primary" class="mr-2">Explore the graph</v-btn>
+        <v-btn to="/query" size="small" variant="text" color="primary">Open graph query</v-btn>
       </div>
     </v-alert>
 
@@ -254,6 +255,11 @@ function chipColor(value?: string | boolean): string {
             </v-list-item>
           </v-list>
           <v-card-text v-else class="text-medium-emphasis">No graph status yet.</v-card-text>
+          <v-card-actions>
+            <v-btn to="/explore" size="small" variant="tonal" color="primary" prepend-icon="mdi-atom-variant">
+              Explore the graph
+            </v-btn>
+          </v-card-actions>
         </v-card>
 
         <v-card border title="Session">
