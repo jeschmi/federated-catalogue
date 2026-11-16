@@ -310,6 +310,13 @@ export const LIMITS = {
   neighbor: NEIGHBOR_LIMIT
 };
 
+/** The same listing the query page uses for "Anything stored". */
+export function wrapperQuery(limit: number): string {
+  return assertReadQuery(`SELECT ?subject ?predicate ?object
+WHERE { ?subject ?predicate ?object }
+LIMIT ${limit}`);
+}
+
 export function lobbyQueries(cypher: boolean): string[] {
   return (cypher ? [cypherLobby()] : [starLobby(), plainLobby()]).map(assertReadQuery);
 }

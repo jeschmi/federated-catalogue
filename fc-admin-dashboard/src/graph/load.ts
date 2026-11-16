@@ -5,16 +5,15 @@ import {
   LIMITS,
   linkQuery,
   lobbyQueries,
-  nameQueries,
-  neighborhoodQueries,
   nodeQueries,
   plainLinkQuery,
   searchQueries,
-  typeQueries
+  typeQueries,
+  wrapperQuery
 } from "./queries";
 import type { Scene, Triple } from "./scene";
 import { triplesToScene } from "./scene";
-import { asList, asProps, cell, isHiddenProp, isIri, RDF, resourceId, usableId } from "./terms";
+import { asList, asProps, cell, isHiddenProp, parseQuotedTriple, RDF, resourceId, usableId } from "./terms";
 
 export interface LoadedScene {
   scene: Scene;
@@ -25,14 +24,19 @@ export function isCypher(info: QueryInfo): boolean {
   return info.queryLanguage?.toUpperCase() === "OPENCYPHER";
 }
 
+const WRAPPER_SCAN = 200;
+
 export async function loadLobby(info: QueryInfo): Promise<LoadedScene> {
-  const rows = await firstRows(info, lobbyQueries(isCypher(info)));
+  if (!isCypher(info)) return listed(info, LIMITS.lobby, "");
+  const rows = await firstRows(info, lobbyQueries(true));
   return gallery(info, rows, LIMITS.lobby);
 }
 
 export async function loadSearch(info: QueryInfo, term: string): Promise<LoadedScene> {
-  if (term.trim().length < 2) throw new Error("Type at least 2 characters.");
-  const rows = await firstRows(info, searchQueries(isCypher(info), term));
+  const needle = term.trim().toLowerCase();
+  if (needle.length < 2) throw new Error("Type at least 2 characters.");
+  if (!isCypher(info)) return listed(info, WRAPPER_SCAN, needle);
+  const rows = await firstRows(info, searchQueries(true, term));
   return gallery(info, rows, LIMITS.search);
 }
 
@@ -43,7 +47,39 @@ export async function loadType(info: QueryInfo, type: string): Promise<LoadedSce
 
 export async function loadNeighborhood(info: QueryInfo, iri: string): Promise<LoadedScene> {
   if (isCypher(info)) return cypherNeighborhood(info, iri);
-  return sparqlNeighborhood(info, iri);
+  const rows = await run(info, wrapperQuery(WRAPPER_SCAN));
+  const matched = rows.filter((row) => rowText(row).includes(iri));
+  return { scene: wrappersToScene(matched, iri), capped: rows.length >= WRAPPER_SCAN };
+}
+
+async function listed(info: QueryInfo, limit: number, needle: string): Promise<LoadedScene> {
+  const rows = await run(info, wrapperQuery(limit));
+  const matched = needle ? rows.filter((row) => rowText(row).toLowerCase().includes(needle)) : rows;
+  return { scene: wrappersToScene(matched, null), capped: rows.length >= limit };
+}
+
+function rowText(row: Record<string, unknown>): string {
+  return [cell(row.subject), cell(row.predicate), cell(row.object)].join("\n");
+}
+
+function wrappersToScene(rows: Record<string, unknown>[], focusId: string | null): Scene {
+  const triples: Triple[] = [];
+  const ids: string[] = [];
+  for (const row of rows) {
+    const quoted = parseQuotedTriple(cell(row.subject));
+    if (quoted && usableId(quoted.subject) && quoted.predicate && quoted.object) {
+      ids.push(quoted.subject);
+      triples.push(quoted);
+      continue;
+    }
+    const subject = resourceId(cell(row.subject));
+    const predicate = cell(row.predicate);
+    const object = cell(row.object);
+    if (!usableId(subject) || !predicate || !object || object.startsWith("<<")) continue;
+    ids.push(subject);
+    triples.push({ subject, predicate, object });
+  }
+  return triplesToScene(triples, focusId, ids);
 }
 
 async function gallery(info: QueryInfo, rows: Record<string, unknown>[], limit: number): Promise<LoadedScene> {
@@ -56,25 +92,6 @@ async function gallery(info: QueryInfo, rows: Record<string, unknown>[], limit: 
     capped = capped || linked.length >= LIMITS.links;
   }
   return { scene: triplesToScene(triples, null, ids), capped };
-}
-
-async function sparqlNeighborhood(info: QueryInfo, iri: string): Promise<LoadedScene> {
-  const rows = await firstRows(info, neighborhoodQueries(iri));
-  const triples = rowTriples(rows);
-  const neighbors = [...new Set(triples.flatMap((triple) => [triple.subject, triple.object]))]
-    .filter((id) => id !== iri && isIri(id))
-    .slice(0, 30);
-  if (neighbors.length > 0) {
-    try {
-      triples.push(...seedTriples(await firstRows(info, nameQueries(neighbors))));
-    } catch {
-      // Names are a convenience. The links still open.
-    }
-  }
-  return {
-    scene: triplesToScene(triples, iri, [iri]),
-    capped: rows.length >= LIMITS.neighbor
-  };
 }
 
 async function linksOrEmpty(info: QueryInfo, ids: string[]): Promise<Record<string, unknown>[]> {
@@ -162,16 +179,6 @@ function linkTriples(rows: Record<string, unknown>[]): Triple[] {
     }
   }
   return triples;
-}
-
-function rowTriples(rows: Record<string, unknown>[]): Triple[] {
-  return rows.flatMap((row) => {
-    const subject = resourceId(cell(row.subject));
-    const predicate = cell(row.predicate);
-    const object = resourceId(cell(row.object));
-    if (!usableId(subject) || !predicate || !usableId(object)) return [];
-    return [{ subject, predicate, object }];
-  });
 }
 
 async function run(info: QueryInfo, query: string): Promise<Record<string, unknown>[]> {

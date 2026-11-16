@@ -130,12 +130,57 @@ export function usableId(value: string): boolean {
   return value.length > 0 && !value.startsWith("<<") && !value.startsWith("_:");
 }
 
+export interface QuotedTriple {
+  subject: string;
+  predicate: string;
+  object: string;
+}
+
+/** The claim inside a quoted triple such as `<<( subject predicate "object" )>>`. */
+export function parseQuotedTriple(value: string): QuotedTriple | null {
+  const text = value.trim();
+  if (!text.startsWith("<<")) return null;
+  const body = text.replace(/^<<+\(?\s*/, "").replace(/\s*\)?>>\s*$/, "").trim();
+  const subject = readIri(body);
+  if (!subject) return null;
+  const predicate = readIri(subject.rest);
+  if (!predicate) return null;
+  const object = readObject(predicate.rest);
+  if (!object) return null;
+  return { subject: subject.iri, predicate: predicate.iri, object };
+}
+
 /** Inner subject of a quoted triple, or the value itself when it is already an identifier. */
 export function resourceId(value: string): string {
-  const text = value.trim();
-  if (!text.startsWith("<<")) return text;
-  const match = text.match(/^<<+\(?\s*<?([a-z][a-z0-9+.-]*:[^\s<>"')]+)>?/i);
-  return match?.[1] ?? text;
+  return parseQuotedTriple(value)?.subject ?? value.trim();
+}
+
+function readIri(input: string): { iri: string; rest: string } | null {
+  const text = input.trimStart();
+  const bracket = /^<([^>\s]+)>\s*([\s\S]*)$/.exec(text);
+  const bracketIri = bracket?.[1];
+  if (bracketIri) return { iri: bracketIri, rest: bracket?.[2] ?? "" };
+  const bare = /^([a-z][a-z0-9+.-]*:[^\s<>"')]+)\s*([\s\S]*)$/i.exec(text);
+  const bareIri = bare?.[1];
+  if (bareIri) return { iri: bareIri, rest: bare?.[2] ?? "" };
+  return null;
+}
+
+function readObject(input: string): string | null {
+  const text = input.trim();
+  if (!text.startsWith('"')) return readIri(text)?.iri ?? null;
+  let out = "";
+  for (let i = 1; i < text.length; i += 1) {
+    const ch = text[i];
+    if (ch === "\\") {
+      out += text[i + 1] ?? "";
+      i += 1;
+      continue;
+    }
+    if (ch === '"') return out;
+    out += ch ?? "";
+  }
+  return null;
 }
 
 const SAFE_IRI = /^[^\s<>"{}|\\^`]+$/;
