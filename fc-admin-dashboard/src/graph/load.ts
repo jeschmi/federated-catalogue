@@ -14,7 +14,7 @@ import {
 } from "./queries";
 import type { Scene, Triple } from "./scene";
 import { triplesToScene } from "./scene";
-import { asList, asProps, cell, isHiddenProp, isIri, RDF, usableId } from "./terms";
+import { asList, asProps, cell, isHiddenProp, isIri, RDF, resourceId, usableId } from "./terms";
 
 export interface LoadedScene {
   scene: Scene;
@@ -31,9 +31,8 @@ export async function loadLobby(info: QueryInfo): Promise<LoadedScene> {
 }
 
 export async function loadSearch(info: QueryInfo, term: string): Promise<LoadedScene> {
-  const needle = term.trim().toLowerCase();
-  if (needle.length < 2) throw new Error("Type at least 2 characters.");
-  const rows = await firstRows(info, searchQueries(isCypher(info), needle));
+  if (term.trim().length < 2) throw new Error("Type at least 2 characters.");
+  const rows = await firstRows(info, searchQueries(isCypher(info), term));
   return gallery(info, rows, LIMITS.search);
 }
 
@@ -135,7 +134,7 @@ async function cypherNeighborhood(info: QueryInfo, iri: string): Promise<LoadedS
 function seedTriples(rows: Record<string, unknown>[]): Triple[] {
   const triples: Triple[] = [];
   for (const row of rows) {
-    const subject = cell(row.subject);
+    const subject = resourceId(cell(row.subject));
     if (!usableId(subject)) continue;
     const name = cell(row.label) || cell(row.name);
     if (name && name !== subject) triples.push({ subject, predicate: RDF.name, object: name });
@@ -151,10 +150,10 @@ function seedTriples(rows: Record<string, unknown>[]): Triple[] {
 function linkTriples(rows: Record<string, unknown>[]): Triple[] {
   const triples: Triple[] = [];
   for (const row of rows) {
-    const subject = cell(row.subject);
+    const subject = resourceId(cell(row.subject));
     const predicate = cell(row.predicate);
-    const object = cell(row.object);
-    if (!usableId(subject) || !predicate || !object) continue;
+    const object = resourceId(cell(row.object));
+    if (!usableId(subject) || !predicate || !usableId(object)) continue;
     triples.push({ subject, predicate, object });
     const objectName = cell(row.objectName);
     if (objectName) triples.push({ subject: object, predicate: RDF.name, object: objectName });
@@ -167,10 +166,10 @@ function linkTriples(rows: Record<string, unknown>[]): Triple[] {
 
 function rowTriples(rows: Record<string, unknown>[]): Triple[] {
   return rows.flatMap((row) => {
-    const subject = cell(row.subject);
+    const subject = resourceId(cell(row.subject));
     const predicate = cell(row.predicate);
-    const object = cell(row.object);
-    if (!usableId(subject) || !predicate || !object) return [];
+    const object = resourceId(cell(row.object));
+    if (!usableId(subject) || !predicate || !usableId(object)) return [];
     return [{ subject, predicate, object }];
   });
 }

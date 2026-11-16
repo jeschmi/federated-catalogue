@@ -130,6 +130,14 @@ export function usableId(value: string): boolean {
   return value.length > 0 && !value.startsWith("<<") && !value.startsWith("_:");
 }
 
+/** Inner subject of a quoted triple, or the value itself when it is already an identifier. */
+export function resourceId(value: string): string {
+  const text = value.trim();
+  if (!text.startsWith("<<")) return text;
+  const match = text.match(/^<<+\(?\s*<?([a-z][a-z0-9+.-]*:[^\s<>"')]+)>?/i);
+  return match?.[1] ?? text;
+}
+
 const SAFE_IRI = /^[^\s<>"{}|\\^`]+$/;
 
 export function sparqlIri(iri: string): string {

@@ -17,16 +17,15 @@ function nameFilter(variable: string): string {
 }
 
 function starLobby(): string {
-  return `PREFIX cred: <${RDF.credential}>
-SELECT ?subject (SAMPLE(?name) AS ?label) (SAMPLE(?type) AS ?kind)
+  return `SELECT ?subject (SAMPLE(?name) AS ?label) (SAMPLE(?type) AS ?kind)
 WHERE {
-  <<(?subject ?p ?o)>> cred:credentialSubject ?cs .
+  <<(?subject ?p ?o)>> <${RDF.credential}> ?cs .
   OPTIONAL {
-    <<(?subject ?np ?name)>> cred:credentialSubject ?csName .
+    <<(?subject ?np ?name)>> <${RDF.credential}> ?csName .
     ${nameFilter("?np")}
   }
   OPTIONAL {
-    <<(?subject <${RDF.type}> ?type)>> cred:credentialSubject ?csType .
+    <<(?subject <${RDF.type}> ?type)>> <${RDF.credential}> ?csType .
   }
 }
 GROUP BY ?subject
@@ -38,7 +37,6 @@ function plainLobby(): string {
   return `SELECT ?subject (SAMPLE(?name) AS ?label) (SAMPLE(?type) AS ?kind)
 WHERE {
   ?subject ?p ?o .
-  FILTER(isIRI(?subject))
   OPTIONAL {
     ?subject ?np ?name .
     ${nameFilter("?np")}
@@ -52,11 +50,10 @@ LIMIT ${LOBBY_LIMIT}`;
 
 function starLinks(iris: string[]): string {
   const values = iris.map((iri) => sparqlIri(iri)).join(" ");
-  return `PREFIX cred: <${RDF.credential}>
-SELECT ?subject ?predicate ?object
+  return `SELECT ?subject ?predicate ?object
 WHERE {
   VALUES ?subject { ${values} }
-  <<(?subject ?predicate ?object)>> cred:credentialSubject ?cs .
+  <<(?subject ?predicate ?object)>> <${RDF.credential}> ?cs .
   FILTER(isIRI(?object))
   FILTER(?predicate != <${RDF.type}>)
 }
@@ -77,16 +74,15 @@ LIMIT ${LINK_LIMIT}`;
 
 function starNeighborhood(iri: string): string {
   const term = sparqlIri(iri);
-  return `PREFIX cred: <${RDF.credential}>
-SELECT ?subject ?predicate ?object
+  return `SELECT ?subject ?predicate ?object
 WHERE {
   {
-    <<(${term} ?predicate ?object)>> cred:credentialSubject ?cs .
+    <<(${term} ?predicate ?object)>> <${RDF.credential}> ?cs .
     BIND(${term} AS ?subject)
   }
   UNION
   {
-    <<(?subject ?predicate ${term})>> cred:credentialSubject ?cs .
+    <<(?subject ?predicate ${term})>> <${RDF.credential}> ?cs .
     BIND(${term} AS ?object)
   }
 }
@@ -106,16 +102,15 @@ LIMIT ${NEIGHBOR_LIMIT}`;
 
 function starNames(iris: string[]): string {
   const values = iris.map((iri) => sparqlIri(iri)).join(" ");
-  return `PREFIX cred: <${RDF.credential}>
-SELECT ?subject (SAMPLE(?name) AS ?label) (SAMPLE(?type) AS ?kind)
+  return `SELECT ?subject (SAMPLE(?name) AS ?label) (SAMPLE(?type) AS ?kind)
 WHERE {
   VALUES ?subject { ${values} }
   OPTIONAL {
-    <<(?subject ?np ?name)>> cred:credentialSubject ?csName .
+    <<(?subject ?np ?name)>> <${RDF.credential}> ?csName .
     ${nameFilter("?np")}
   }
   OPTIONAL {
-    <<(?subject <${RDF.type}> ?type)>> cred:credentialSubject ?csType .
+    <<(?subject <${RDF.type}> ?type)>> <${RDF.credential}> ?csType .
   }
 }
 GROUP BY ?subject
@@ -137,23 +132,60 @@ GROUP BY ?subject
 LIMIT ${iris.length}`;
 }
 
-function searchFilter(term: string): string {
-  const needle = quoteLiteral(term);
-  return `FILTER(CONTAINS(LCASE(STR(?subject)), ${needle}) || CONTAINS(LCASE(STR(?o)), ${needle}) || CONTAINS(LCASE(STR(?p)), ${needle}))`;
+const GENERIC_IRI = /^https?:\/\/(?:schema\.org|www\.w3\.org|purl\.org|w3id\.org)(?:[/#?]|$)/i;
+
+/**
+ * Pieces of a pasted query cell worth looking up.
+ * A quoted triple is split into its own identifier and quoted text.
+ * A plain identifier or name is kept whole.
+ */
+export function searchValues(term: string): string[] {
+  const compact = term.replace(/\s+/g, " ").trim();
+  const lower = compact.toLowerCase();
+  if (lower.length < 2) return [];
+  if (!lower.startsWith("<<")) return [lower];
+
+  const iris = [...lower.matchAll(/https?:\/\/[^\s<>"')]+/g)].map((match) => match[0]);
+  const quoted = [...compact.matchAll(/"([^"]{2,})"/g)]
+    .map((match) => match[1].trim().toLowerCase())
+    .filter((value) => value.length >= 2);
+  const specific = iris.filter((iri) => !GENERIC_IRI.test(iri));
+  const chosen = specific.length > 0 ? specific : iris.slice(0, 1);
+  const values = [...new Set([...chosen, ...quoted])];
+  return values.length > 0 ? values : [lower];
 }
 
-function starSearch(term: string): string {
-  return `PREFIX cred: <${RDF.credential}>
-SELECT ?subject (SAMPLE(?name) AS ?label) (SAMPLE(?type) AS ?kind)
+function matchAny(variable: string, values: string[]): string {
+  return values
+    .map((value) => {
+      const needle = quoteLiteral(value);
+      const text = `LCASE(STR(${variable}))`;
+      return `CONTAINS(${text}, ${needle}) || (isIRI(${variable}) && STRLEN(${text}) >= 12 && CONTAINS(${needle}, ${text}))`;
+    })
+    .join(" || ");
+}
+
+function searchFilter(values: string[], variables: string[]): string {
+  const checks = variables.map((variable) => matchAny(variable, values));
+  const annotation = `LCASE(STR(<${RDF.credential}>))`;
+  for (const value of values) {
+    const needle = quoteLiteral(value);
+    checks.push(`(CONTAINS(${annotation}, ${needle}) && CONTAINS(${needle}, "credentialsubject"))`);
+  }
+  return `FILTER(${checks.join(" || ")})`;
+}
+
+function starSearch(values: string[]): string {
+  return `SELECT ?subject (SAMPLE(?name) AS ?label) (SAMPLE(?type) AS ?kind)
 WHERE {
-  <<(?subject ?p ?o)>> cred:credentialSubject ?cs .
-  ${searchFilter(term)}
+  <<(?subject ?p ?o)>> <${RDF.credential}> ?cs .
+  ${searchFilter(values, ["?subject", "?p", "?o", "?cs"])}
   OPTIONAL {
-    <<(?subject ?np ?name)>> cred:credentialSubject ?csName .
+    <<(?subject ?np ?name)>> <${RDF.credential}> ?csName .
     ${nameFilter("?np")}
   }
   OPTIONAL {
-    <<(?subject <${RDF.type}> ?type)>> cred:credentialSubject ?csType .
+    <<(?subject <${RDF.type}> ?type)>> <${RDF.credential}> ?csType .
   }
 }
 GROUP BY ?subject
@@ -161,12 +193,11 @@ ORDER BY ?subject
 LIMIT ${SEARCH_LIMIT}`;
 }
 
-function plainSearch(term: string): string {
+function plainSearch(values: string[]): string {
   return `SELECT ?subject (SAMPLE(?name) AS ?label) (SAMPLE(?type) AS ?kind)
 WHERE {
   ?subject ?p ?o .
-  FILTER(isIRI(?subject))
-  ${searchFilter(term)}
+  ${searchFilter(values, ["?subject", "?p", "?o"])}
   OPTIONAL {
     ?subject ?np ?name .
     ${nameFilter("?np")}
@@ -180,16 +211,15 @@ LIMIT ${SEARCH_LIMIT}`;
 
 function starType(type: string): string {
   const term = sparqlIri(type);
-  return `PREFIX cred: <${RDF.credential}>
-SELECT ?subject (SAMPLE(?name) AS ?label) (SAMPLE(?type) AS ?kind)
+  return `SELECT ?subject (SAMPLE(?name) AS ?label) (SAMPLE(?type) AS ?kind)
 WHERE {
-  <<(?subject <${RDF.type}> ${term})>> cred:credentialSubject ?cs .
+  <<(?subject <${RDF.type}> ${term})>> <${RDF.credential}> ?cs .
   OPTIONAL {
-    <<(?subject ?np ?name)>> cred:credentialSubject ?csName .
+    <<(?subject ?np ?name)>> <${RDF.credential}> ?csName .
     ${nameFilter("?np")}
   }
   OPTIONAL {
-    <<(?subject <${RDF.type}> ?type)>> cred:credentialSubject ?csType .
+    <<(?subject <${RDF.type}> ?type)>> <${RDF.credential}> ?csType .
   }
 }
 GROUP BY ?subject
@@ -316,7 +346,10 @@ export function nameQueries(iris: string[]): string[] {
 }
 
 export function searchQueries(cypher: boolean, term: string): string[] {
-  return (cypher ? [cypherSearch(term)] : [starSearch(term), plainSearch(term)]).map(assertReadQuery);
+  if (cypher) return [cypherSearch(term.trim().toLowerCase())].map(assertReadQuery);
+  const values = searchValues(term);
+  if (values.length === 0) throw new Error("Type at least 2 characters.");
+  return [starSearch(values), plainSearch(values)].map(assertReadQuery);
 }
 
 export function typeQueries(cypher: boolean, type: string): string[] {
