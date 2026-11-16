@@ -299,7 +299,7 @@ helm upgrade --install fc-service deployment/helm/fc-service \
   --server-side=true --force-conflicts
 ```
 
-CI runs the same deploy on every push to `dev` (see `.github/workflows/docker-build.yml`).
+CI runs the same deploy on every push to `dev` (see `.github/workflows/docker-build.yml`). The cluster credentials for that job are the `KUBE_CONFIG` secret; encode the kubeconfig as described in [docs/ci-cd.md](../../../docs/ci-cd.md).
 
 ## Upgrading an existing release
 
