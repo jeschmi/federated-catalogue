@@ -146,9 +146,10 @@ export function searchValues(term: string): string[] {
   if (!lower.startsWith("<<")) return [lower];
 
   const iris = [...lower.matchAll(/https?:\/\/[^\s<>"')]+/g)].map((match) => match[0]);
-  const quoted = [...compact.matchAll(/"([^"]{2,})"/g)]
-    .map((match) => match[1].trim().toLowerCase())
-    .filter((value) => value.length >= 2);
+  const quoted = [...compact.matchAll(/"([^"]{2,})"/g)].flatMap((match) => {
+    const text = match[1]?.trim().toLowerCase();
+    return text && text.length >= 2 ? [text] : [];
+  });
   const specific = iris.filter((iri) => !GENERIC_IRI.test(iri));
   const chosen = specific.length > 0 ? specific : iris.slice(0, 1);
   const values = [...new Set([...chosen, ...quoted])];
