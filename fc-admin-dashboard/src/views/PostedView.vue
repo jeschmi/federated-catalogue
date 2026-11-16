@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
+import HelpTip from "@/components/HelpTip.vue";
 import { api } from "@/services/api";
 import { ApiError, type PostedAsset, type PostedAssetContent, type PostedAssetPage } from "@/types";
 
@@ -12,11 +13,11 @@ const contentError = ref("");
 const contentLoading = ref(false);
 
 const headers = [
-  { title: "Id", key: "id" },
-  { title: "Status", key: "status" },
-  { title: "Issuer", key: "issuer" },
-  { title: "Type", key: "contentType" },
-  { title: "Uploaded", key: "uploadDatetime" }
+  { title: "Id", key: "id", hint: "Catalogue identifier of the stored asset, usually the credential subject." },
+  { title: "Status", key: "status", hint: "Lifecycle of the asset, such as active or revoked." },
+  { title: "Issuer", key: "issuer", hint: "Who signed or published the asset." },
+  { title: "Type", key: "contentType", hint: "Media type of the stored body, such as a verifiable credential." },
+  { title: "Uploaded", key: "uploadDatetime", hint: "When the catalogue accepted the file." }
 ];
 
 onMounted(async () => {
@@ -51,7 +52,10 @@ async function openAsset(asset: PostedAsset) {
 <template>
   <div>
     <div class="d-flex align-center mb-4">
-      <h1 class="text-h5">Posted data</h1>
+      <h1 class="text-h5 d-inline-flex align-center">
+        Posted data
+        <HelpTip text="The database copy of each posted asset. The graph is a separate index of the claims inside active assets." />
+      </h1>
       <v-spacer />
       <span class="text-body-2 text-medium-emphasis">{{ total }}</span>
     </div>
@@ -66,7 +70,24 @@ async function openAsset(asset: PostedAsset) {
       item-value="id"
       @click:row="(_event: unknown, row: { item: PostedAsset }) => openAsset(row.item)"
     >
-      <template #no-data>No assets stored.</template>
+      <template v-for="header in headers" :key="header.key" #[`header.${header.key}`]="{ column, getSortIcon }">
+        <div class="v-data-table-header__content">
+          <span class="d-inline-flex align-center">
+            {{ column.title }}
+            <HelpTip :text="header.hint" />
+          </span>
+          <v-icon v-if="column.sortable !== false" :icon="getSortIcon(column)" class="v-data-table-header__sort-icon" />
+        </div>
+      </template>
+      <template #no-data>
+        <div class="pa-4 text-body-2">
+          <template v-if="error">Could not list assets.</template>
+          <template v-else>
+            No assets stored yet. After a credential is posted, its record and body appear here.
+            Graph query examples show how those claims are searched.
+          </template>
+        </div>
+      </template>
     </v-data-table>
 
     <v-card v-if="contentLoading || selected || contentError" border class="mt-4">
