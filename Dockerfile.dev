@@ -5,7 +5,3 @@
 FROM bellsoft/liberica-openjdk-alpine:25 AS fc-service-server
 COPY fc-service-server/target/fc-service-server-*.jar fc-service-server.jar
 ENTRYPOINT ["java", "-jar", "/fc-service-server.jar"]
-
-FROM bellsoft/liberica-openjdk-alpine:25 AS fc-demo-portal
-COPY fc-demo-portal/target/fc-demo-portal-*.jar fc-demo-portal.jar
-ENTRYPOINT ["java", "-jar", "/fc-demo-portal.jar"]

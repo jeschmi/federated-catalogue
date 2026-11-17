@@ -12,8 +12,8 @@ of [Gaia-X Federation Services Lot 5 — Federated Catalogue / Core Catalogue Fe
 ## Installation & Setup
 
 **Kubernetes via the bundled [Helm chart](deployment/helm/fc-service/README.md)** (`deployment/helm/fc-service/`) is
-the demo / reference deployment path — it stands up the full stack (fc-service, fc-demo-portal, Keycloak,
-PostgreSQL, Fuseki) on a cluster; see the chart's own README for a from-scratch cluster walkthrough.
+the demo / reference deployment path — it stands up the full stack (fc-service, Keycloak,
+PostgreSQL, Fuseki, and fc-admin-dashboard when enabled) on a cluster; see the chart's own README for a from-scratch cluster walkthrough.
 
 **Docker Compose is a developer tool**, not a supported deployment: it builds and runs the service locally from a
 source checkout for development and testing. See [`docker/README.md`](docker/README.md) for the build & test

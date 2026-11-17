@@ -51,7 +51,6 @@
         <module>fc-graphdb-neo4j</module>
         <module>fc-graphdb-fuseki</module>
         <module>fc-service-server</module>
-        <module>fc-demo-portal</module>
         <module>fc-tools/signer</module>
     </modules>
 
@@ -735,29 +734,6 @@
                         <configuration>
                             <dryRun>true</dryRun>
                             <failOnMissingHeader>true</failOnMissingHeader>
-                        </configuration>
-                    </execution>
-                    <!-- Manual, unbound sweep for this module's web static assets (fc-demo-portal
-                         only; harmless no-op elsewhere since the include patterns won't match).
-                         Invoke explicitly: `mvn -pl fc-demo-portal license:update-file-header@sweep-web-assets`.
-                         Vendored third-party scripts are excluded, since they are not project IP:
-                         those under .../static/**/lib/** by directory, and minified vendor scripts
-                         elsewhere (e.g. fc-service-server's jquery-3.6.3.min.js, jquery-ui.min.js)
-                         by the **/*.min.js pattern. -->
-                    <execution>
-                        <id>sweep-web-assets</id>
-                        <goals>
-                            <goal>update-file-header</goal>
-                        </goals>
-                        <configuration>
-                            <includes combine.self="override">
-                                <include>**/*.html</include>
-                                <include>**/*.js</include>
-                            </includes>
-                            <excludes combine.self="override">
-                                <exclude>**/lib/**</exclude>
-                                <exclude>**/*.min.js</exclude>
-                            </excludes>
                         </configuration>
                     </execution>
                     <!-- Manual, unbound sweep for repo-root assets that live outside any module's

@@ -44,7 +44,7 @@ configured realm (including an existing `gaia-x` realm where applicable):
 3. Ensure the server's `KEYCLOAK_CREDENTIALS_SECRET` matches this client's secret. No new secret is
    needed when enabling the existing account. The supplied client uses full scope, so the assigned
    roles are included in its token; deployments with restricted scope must also allow these roles.
-4. Log in to the portal as an application administrator and verify `/admin/me`, `/users` and `/roles`.
+4. Log in to the admin dashboard as an application administrator and verify `/admin/me`, `/users` and `/roles`.
    Verify that non-admin users are still denied. A service-account token alone must not grant access
    to catalogue admin or protected machine APIs.
 

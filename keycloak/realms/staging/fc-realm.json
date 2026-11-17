@@ -627,12 +627,7 @@
       "clientAuthenticatorType": "client-secret",
       "secret": "EDH8hiaio5wfrlamv4gv2yZxq1LYFRpD",
       "redirectUris": [
-        "http://78.138.66.147:8088/*",
         "https://staging.catalogue.example.com/*",
-        "https://fc-demo-server.gxfs.dev/*",
-        "http://fc-demo-server.gxfs.dev/*",
-        "http://127.0.0.1:8088/*",
-        "http://key-server:8088/*",
         "http://localhost:5173/dashboard/",
         "http://localhost:5173/dashboard/*",
         "http://127.0.0.1:5173/dashboard/",

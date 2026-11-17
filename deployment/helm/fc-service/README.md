@@ -8,7 +8,6 @@ Deploys the full Federated Catalogue stack to Kubernetes.
 |----------------|--------------------------------------------------------------|------|
 | fc-service     | `ghcr.io/project-construct-x/federated-catalogue/fc-service-server` | 8081 |
 | fc-admin-dashboard | `ghcr.io/project-construct-x/federated-catalogue/fc-admin-dashboard` | 8080 |
-| fc-demo-portal | `ghcr.io/project-construct-x/federated-catalogue/fc-demo-portal`    | 8088 |
 | Keycloak       | `quay.io/keycloak/keycloak` (sub-chart: `keycloakx`)                | 8080 |
 | PostgreSQL     | `postgres`                                                          | 5432 |
 | Fuseki         | `ghcr.io/project-construct-x/federated-catalogue/fc-fuseki`         | 3030 |
@@ -64,7 +63,6 @@ Edit the `hosts` section at the top of `values.yaml`:
 hosts:
   fcService: "fc-server.<EXTERNAL-IP>.sslip.io"
   keycloak:  "key-server.<EXTERNAL-IP>.sslip.io"
-  portal:    "fc-demo-portal.<EXTERNAL-IP>.sslip.io"
 ```
 
 Templates derive hostnames from `hosts.*`. Also update the matching literal strings in
@@ -116,7 +114,7 @@ helm upgrade --install fc-service deployment/helm/fc-service \
 kubectl get pods -n federated-catalogue
 ```
 
-All five pods should reach `Running` / `1/1`. Fuseki and fc-service take ~60 s to pass their readiness probes. On first start, Fuseki waits for its PVC to be provisioned — allow extra time on cold start.
+All four pods should reach `Running` / `1/1`. Fuseki and fc-service take ~60 s to pass their readiness probes. On first start, Fuseki waits for its PVC to be provisioned — allow extra time on cold start. The admin dashboard is off unless `dashboard.enabled` is set.
 
 ---
 
@@ -129,7 +127,6 @@ Replace `<EXTERNAL-IP>` with the configured IP:
 | fc-service API | `https://fc-server.<EXTERNAL-IP>.sslip.io`               |
 | Admin dashboard | `https://fc-server.<EXTERNAL-IP>.sslip.io/dashboard`     |
 | Keycloak admin | `https://key-server.<EXTERNAL-IP>.sslip.io/auth`         |
-| fc-demo-portal | `https://fc-demo-portal.<EXTERNAL-IP>.sslip.io`          |
 
 TLS certificates are issued automatically by Let's Encrypt via HTTP-01 challenge. Allow a minute after first deploy for certificates to be provisioned.
 
@@ -328,7 +325,7 @@ The Keycloak OAuth2 client secret (`fc-keycloak-client-secret`) is intentionally
 
 ## Security context
 
-`fc-service` and `fc-demo-portal` run hardened:
+`fc-service` runs hardened:
 - UID 1000, non-root
 - `readOnlyRootFilesystem: true`
 - All Linux capabilities dropped

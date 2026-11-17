@@ -110,8 +110,9 @@ If you need to update an existing realm, use Keycloak's partial import:
 Partial import with **Skip** does not delete legacy roles or users. To verify the admin-only realm from a
 fresh import, use a separate local database or do a full teardown (`./dev.sh clean`) and restart.
 
-You can test administrator login through the Demo Portal at `http://localhost:8088`. Press Login and use
-an account assigned `ADMIN_ALL`.
+Administrator login uses `fc-admin-dashboard` with an account assigned `ADMIN_ALL`. Compose does not
+start the dashboard. Run it from `fc-admin-dashboard` (`npm run dev`), or open `/dashboard` on a
+deployment where that image is enabled.
 
 
 ## Run tests
@@ -127,9 +128,6 @@ Go to the main folder of this repository and run the following command:
 ```sh
 # Build an image for the Catalog server 
 docker build --target fc-service-server -t fc-service-server . 
-
-# Build an image for the Demo-Portal app 
-docker build --target fc-demo-portal -t fc-demo-portal . 
 ```
 
 Note: initial build may take up to 5 minutes to download all required libraries. Subsequent builds take much less time. 

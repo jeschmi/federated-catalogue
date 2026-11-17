@@ -76,7 +76,7 @@ class AdminJwtAuthenticationTest {
   @ParameterizedTest @ValueSource(strings = {"/admin/me", "/users"})
   void adminRoleInWrongClientOrRealmIsForbidden(String path) throws Exception {
     for (var claims : List.of(
-        Map.<String, Object>of("resource_access", Map.of("demo-portal", Map.of("roles", List.of("ADMIN_ALL")))),
+        Map.<String, Object>of("resource_access", Map.of("other-client", Map.of("roles", List.of("ADMIN_ALL")))),
         Map.<String, Object>of("realm_access", Map.of("roles", List.of("ADMIN_ALL"))))) {
       mvc.perform(get(path).header("Authorization", "Bearer " + token(signingKey, ISSUER, 600, claims)))
           .andExpect(status().isForbidden());

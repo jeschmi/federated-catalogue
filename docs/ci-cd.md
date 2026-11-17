@@ -18,7 +18,6 @@ Images are published to GitHub Container Registry under this repository:
 - `ghcr.io/project-construct-x/federated-catalogue/fc-fuseki`
 - `ghcr.io/project-construct-x/federated-catalogue/fc-admin-dashboard`
 
-`fc-demo-portal` is local-testing only (Docker Compose / `Dockerfile` target); it is not built or published to GHCR.
 The admin dashboard is published with the other images and, on the staging deploy, served at
 `/dashboard`. Its redirect URIs are in `fc-realm.json`. Realm import does not update a realm
 that already exists, so a staging realm created before those URIs were added needs them

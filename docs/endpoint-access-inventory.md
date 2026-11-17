@@ -157,7 +157,7 @@ The OID4VP implementation must add its concrete method/path pairs to this
 inventory when integrated; the reserved prefix is not an implemented bootstrap
 flow. Bootstrap credentials must remain insufficient for machine operations.
 
-The portal is a separate application. Its login restriction is a separate part
+The admin dashboard is a separate application. Its login restriction is a separate part
 of strip D and is not represented as a catalogue server operation here.
 
 ## Relationship to the running security configuration
@@ -227,5 +227,5 @@ endpoint-classification acceptance criterion is complete for this branch.
 Incoming authentication is exercised separately by `DcpMachineSecurityTest` for
 every listed machine operation. It uses real SI signature/replay validation and
 membership policy, with external services and VC/VP verification isolated. Real
-wallet/Credential Service interoperability and the remaining bootstrap/portal
+wallet/Credential Service interoperability and the remaining bootstrap and admin-dashboard
 parts of strip D are separate work.

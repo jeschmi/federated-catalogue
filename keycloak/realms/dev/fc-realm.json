@@ -627,11 +627,6 @@
       "clientAuthenticatorType": "client-secret",
       "secret": "**********",
       "redirectUris": [
-        "http://78.138.66.147:8088/*",
-        "http://localhost:8088/*",
-        "https://fc-demo-server.gxfs.dev/*",
-        "http://fc-demo-server.gxfs.dev/*",
-        "http://127.0.0.1:8088/*",
         "http://localhost:5173/dashboard/",
         "http://localhost:5173/dashboard/*",
         "http://127.0.0.1:5173/dashboard/",
@@ -1386,7 +1381,7 @@
     "referrerPolicy": "no-referrer",
     "xRobotsTag": "none",
     "xFrameOptions": "",
-    "contentSecurityPolicy": "frame-src 'self'; frame-ancestors 'self' http://localhost:8088; object-src 'none';",
+    "contentSecurityPolicy": "frame-src 'self'; frame-ancestors 'self'; object-src 'none';",
     "xXSSProtection": "1; mode=block",
     "strictTransportSecurity": "max-age=31536000; includeSubDomains"
   },

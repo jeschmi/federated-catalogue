@@ -126,9 +126,9 @@ EOF
 
 case "${1:-}" in
   up)
-    # Start infrastructure only by scaling server and portal to 0
+    # Start infrastructure only by scaling the catalogue server to 0
     echo "Start infrastructure only (postgres, fuseki, keycloak, nats, …) for use with manual start of Spring Boot devtools"
-    $COMPOSE_DEV up --scale server=0 --scale portal=0 "${@:2}"
+    $COMPOSE_DEV up --scale server=0 "${@:2}"
     ;;
   run)
     echo "Starting fc-server with Spring Boot devtools (dev profile)..."
@@ -172,7 +172,7 @@ case "${1:-}" in
     echo "Building fc-service-server JAR (skipping tests)..."
     # `mvn package` covers both scenarios (bare-metal with spring-boot dev-tools and containerized).
     # For local mode with devtools, `mvn compile` would be enough here.
-    (cd .. && mvn clean package -pl fc-service-server,fc-demo-portal -am -DskipTests -Dcheckstyle.skip "${@:2}")
+    (cd .. && mvn clean package -pl fc-service-server -am -DskipTests -Dcheckstyle.skip "${@:2}")
     ;;
   test)
     echo "Running hot-reload verification tests..."

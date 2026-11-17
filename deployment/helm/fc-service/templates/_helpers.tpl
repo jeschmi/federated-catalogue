@@ -62,33 +62,6 @@ Create the name of the service account to use
 {{- end }}
 
 {{/*
-Fully qualified name for the portal component.
-*/}}
-{{- define "fc-service.portal.fullname" -}}
-{{- .Values.portal.fullnameOverride | trunc 63 | trimSuffix "-" }}
-{{- end }}
-
-{{/*
-Portal labels
-*/}}
-{{- define "fc-service.portal.labels" -}}
-helm.sh/chart: {{ include "fc-service.chart" . }}
-{{ include "fc-service.portal.selectorLabels" . }}
-{{- if .Chart.AppVersion }}
-app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
-{{- end }}
-app.kubernetes.io/managed-by: {{ .Release.Service }}
-{{- end }}
-
-{{/*
-Portal selector labels
-*/}}
-{{- define "fc-service.portal.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "fc-service.portal.fullname" . }}
-app.kubernetes.io/instance: {{ .Release.Name }}
-{{- end }}
-
-{{/*
 Fully qualified name for the PostgreSQL component.
 */}}
 {{- define "fc-service.postgres.fullname" -}}

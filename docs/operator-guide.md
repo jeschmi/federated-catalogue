@@ -13,7 +13,7 @@ The Keycloak realm name is configurable via the `KEYCLOAK_REALM` environment var
 |------------------|------------------|-----------------------------|---------------------------------------------------|
 | `keycloak.realm` | `KEYCLOAK_REALM` | `federated-catalogue-realm` | Realm name the application authenticates against. |
 
-The same variable is honored by `fc-service-server`, `fc-demo-portal`, `docker-compose.yml`, the Helm chart
+The same variable is honored by `fc-service-server`, `docker-compose.yml`, the Helm chart
 (`keycloak.realm` value), and the manual Kubernetes manifests under `deployment/manual/`.
 
 ### Fresh deployment (default)

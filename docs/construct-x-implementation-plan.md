@@ -49,7 +49,7 @@ Branch `keycloak-reduction` (ahead of `dev`) implements work packages A–E for 
 | Ownership | Self-publish only. Asset issuer must equal the membership subject DID. Participant create/update/delete/read is limited to that DID; the collection returns at most the caller's own record. Path, body, and header participant ids do not authenticate the caller. Delegation and third-party publishing are rejected. |
 | Participants | Liquibase `024` stores participants in `catalogue_participants`, keyed by DID. Keycloak groups are not participants. `GET /participants/{id}/users` is admin-only and returns 410. Admin `participantId` is ignored. The migration starts empty; existing installations re-register through the DCP participant path. |
 | Audit | Envers `revinfo` stores `participant_did`, `actor_did`, and `authentication_method=DCP` (changeset `023`). Only a real `DcpAuthenticationToken` supplies them. An MVC interceptor logs one JSON `dcp_operation` event per completed machine call, without bodies, tokens, or query strings. Security-chain rejections do not become those events. |
-| Portal | `fc-demo-portal` OIDC login requires `ADMIN_ALL`. |
+| Admin dashboard | `fc-admin-dashboard` is the admin UI. Catalogue admin APIs require `ADMIN_ALL`. |
 | Tests and contract | OpenAPI `x-access-category` is lint-enforced. `KeycloakBoundaryTest` and `DcpMachineSecurityTest` exercise the real filter chains for the classified operations, including rejection of Keycloak and bootstrap-style JWTs. Replay, ownership, identity propagation, and realm shape have targeted tests. |
 
 Under the current policy the authenticated actor DID and the membership subject DID are the same value: the Self-Issued holder. `isConsumer`, `isProvider`, and credential status lists are not authorization checks yet. The historical property name `POST_ASSETS` is the shared membership policy for every machine operation.
@@ -316,7 +316,7 @@ Running chains, first match wins:
 3. **Policy in force:** trusted issuer, exactly one `MembershipCredential`, subject equals SI holder, strict VC/VP verification, SI replay protection. `credentialStatus`, `isConsumer`, and `isProvider` are not checked. Unsigned presentations and inline JSON-LD credentials are not an authentication fallback.
 4. **Done for DCP:** a verified `DcpIdentity` is installed for the request and cleared afterwards. Ownership and audit use that identity. The verify/store pipeline is unchanged aside from those checks. OID4VP token minting is not implemented.
 5. **Open.** Examples and hurl still contain Keycloak password-grant steps. Replace those with a DCP machine-authentication fixture, and add a separate OID4VP bootstrap fixture when that protocol exists. Do not turn password grants back on.
-6. **Done for the portal gate:** `fc-demo-portal` requires `ADMIN_ALL`. Publish and query demos are not a portal flow; they need the DCP example migration in item 5. Connector bootstrap remains OID4VP and is not in the portal.
+6. **Done for the admin gate:** catalogue admin APIs require `ADMIN_ALL`. The UI is `fc-admin-dashboard`. Publish and query demos are not a dashboard flow; they need the DCP example migration in item 5. Connector bootstrap remains OID4VP and is not in the dashboard.
 
 ### Work package E — Tests & migration
 

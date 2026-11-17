@@ -25,7 +25,6 @@
 hosts:
   fcService: "fc-server.<EXTERNAL-IP>.sslip.io"
   keycloak: "key-server.<EXTERNAL-IP>.sslip.io"
-  portal: "fc-demo-portal.<EXTERNAL-IP>.sslip.io"
   did: "did.<EXTERNAL-IP>.sslip.io"
 
 name: fc-service
@@ -331,59 +330,6 @@ keycloak:
   service:
     type: ClusterIP
     httpPort: 8080
-
-portal:
-  enabled: true
-  fullnameOverride: fc-demo-portal
-  replicaCount: 1
-  image:
-    repository: ghcr.io/project-construct-x/federated-catalogue/fc-demo-portal
-    tag: ""
-    pullPolicy: IfNotPresent
-  # keycloakIssuerUri is constructed from hosts.keycloak in portal-deployment.yaml
-  fcBaseUri: http://fc-service:8081
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 0
-  service:
-    port: 8088
-  tls:
-    secretName: fc-demo-portal-tls
-  ingress:
-    enabled: true
-    className: traefik
-    annotations:
-      cert-manager.io/cluster-issuer: letsencrypt
-      traefik.ingress.kubernetes.io/router.entrypoints: websecure
-      traefik.ingress.kubernetes.io/service.sticky.cookie: "true"
-      traefik.ingress.kubernetes.io/service.sticky.cookie.name: "SERVERID"
-  probes:
-    path: /actuator/health
-    initialDelaySeconds: 60
-    periodSeconds: 30
-  resources: {}
-  securityContext:
-    allowPrivilegeEscalation: false
-    runAsNonRoot: true
-    runAsUser: 1000
-    readOnlyRootFilesystem: true
-    capabilities:
-      drop: [ALL]
-  volumeMounts:
-    - name: logs
-      mountPath: /logs
-    - name: tmp
-      mountPath: /tmp
-  volumes:
-    - name: logs
-      emptyDir: {}
-    - name: tmp
-      emptyDir: {}
-  nodeSelector: {}
-  tolerations: []
-  affinity: {}
 
 # Static admin UI served at /dashboard on hosts.fcService.
 # Talks to Keycloak at /auth on the same host. Off until an image is published.

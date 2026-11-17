@@ -1,7 +1,7 @@
 # Construct-X staging (STACKIT SKE: construct-x-stag)
 #
-# Base stack only: fc-service + Keycloak + Postgres + Fuseki.
-# No demo portal (frontend). Neo4j is not part of this chart.
+# Base stack: fc-service + Keycloak + Postgres + Fuseki + admin dashboard.
+# Neo4j is not part of this chart.
 #
 # Public URL: https://federated-catalogue.staging.construct-x.net/
 #   - catalogue API at /
@@ -28,8 +28,7 @@
 hosts:
   fcService: "federated-catalogue.staging.construct-x.net"
   keycloak: "federated-catalogue.staging.construct-x.net"
-  # unused while portal.enabled=false / did.enabled=false
-  portal: "federated-catalogue.staging.construct-x.net"
+  # unused while did.enabled=false
   did: "federated-catalogue.staging.construct-x.net"
 
 image:
@@ -89,9 +88,6 @@ keycloak:
       - hosts:
           - "federated-catalogue.staging.construct-x.net"
         secretName: federated-catalogue-tls
-
-portal:
-  enabled: false
 
 dashboard:
   enabled: true
