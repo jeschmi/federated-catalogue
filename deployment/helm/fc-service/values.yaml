@@ -181,11 +181,6 @@ affinity:
 
 hostAliases: []
 
-storage:
-  enabled: false
-  size: 2Gi
-  path: /mnt/data/postgresql
-
 env:
   - name: DATASTORE_FILE_PATH
     value: /var/lib/fc-service/filestore
@@ -226,20 +221,6 @@ env:
 #  - name: LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY
 #    value: DEBUG
 
-postgresql:
-  fullnameOverride: fc-postgres
-  # Using official PostgreSQL image (not Bitnami)
-  image:
-    repository: postgres
-    tag: "18.3"
-  auth:
-    postgresPassword: postgres
-    username: keycloak
-    password: keycloak
-    database: postgres
-  persistence:
-    enabled: true
-    size: 10Gi
 
 keycloak:
   fullnameOverride: fc-keycloak

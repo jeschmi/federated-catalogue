@@ -16,7 +16,7 @@
 ###
 
 apiVersion: v2
-name: fc-service
+name: constructx-fc
 home: https://github.com/eclipse-xfsc/federated-catalogue
 description: A Helm chart for the Eclipse XFSC Federated Catalogue service.
 type: application
